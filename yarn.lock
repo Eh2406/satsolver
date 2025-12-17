@@ -5,8 +5,35 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
+"async-mutex@npm:^0.3.2":
+  version: 0.3.2
+  resolution: "async-mutex@npm:0.3.2"
+  dependencies:
+    tslib: "npm:^2.3.1"
+  checksum: 10c0/456c6cc480f2fa5afce6e0bd375fed7fc9f3705e77545c29218b01e7283a652928d38a571c5375787a5c198ea3c6679cf0e28b0109f369545881702daec64128
+  languageName: node
+  linkType: hard
+
 "smtsolver@workspace:.":
   version: 0.0.0-use.local
   resolution: "smtsolver@workspace:."
+  dependencies:
+    z3-solver: "npm:^4.15.4"
   languageName: unknown
   linkType: soft
+
+"tslib@npm:^2.3.1":
+  version: 2.8.1
+  resolution: "tslib@npm:2.8.1"
+  checksum: 10c0/9c4759110a19c53f992d9aae23aac5ced636e99887b51b9e61def52611732872ff7668757d4e4c61f19691e36f4da981cd9485e869b4a7408d689f6bf1f14e62
+  languageName: node
+  linkType: hard
+
+"z3-solver@npm:^4.15.4":
+  version: 4.15.4
+  resolution: "z3-solver@npm:4.15.4"
+  dependencies:
+    async-mutex: "npm:^0.3.2"
+  checksum: 10c0/4e74c39575aa5590cb680079fa0d31a055dc1a21dd1686a4c08f493f4a5cf1a25ba77c7051d94d6451f7c49f7d13eecd91b2de8409f2b558a467396cbcfcf554
+  languageName: node
+  linkType: hard
