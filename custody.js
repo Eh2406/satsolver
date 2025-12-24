@@ -81,19 +81,62 @@ const useSolver = async (numberOfResults = 1) => {
     solver.add(custody[day].eq(1).implies(work[day].eq(0)));
     solver.add(custody[day].eq(1).implies(work[(day + 1) % 42].eq(0)));
   }
-
-  if(await solver.check() !== 'sat'){ return solver.check(); }
-
-  const model = solver.model();
-
-  const results = {};
-
-  results.custody = custody.map(day => model.eval(day).toString());
-  results.work = work.map(day => model.eval(day).toString());
-
+  
+  const results = [];
+  
+  // Find multiple solutions
+  for (let i = 0; i < numberOfResults; i++) {
+    const checkResult = await solver.check();
+    
+    if (checkResult !== 'sat') {
+      break; // No more solutions
+    }
+    
+    const model = solver.model();
+    
+    // Extract current solution
+    const currentSolution = {
+      custody: custody.map(day => model.eval(day).toString()),
+      work: work.map(day => model.eval(day).toString())
+    };
+    
+    results.push(currentSolution);
+    
+    // Exclude this solution: at least one variable must be different
+    // Create: OR(custody[0] != value0, custody[1] != value1, ..., work[0] != value0, ...)
+    const exclusionConstraints = [];
+    
+    // Add constraints for all custody variables
+    custody.forEach((day, index) => {
+      const value = model.eval(day);
+      exclusionConstraints.push(day.neq(value));
+    });
+    
+    // Add constraints for all work variables
+    work.forEach((day, index) => {
+      const value = model.eval(day);
+      exclusionConstraints.push(day.neq(value));
+    });
+    
+    // At least one must be different
+    solver.add(context.Or(...exclusionConstraints));
+  }
+  
   return results;
 }
 
-useSolver(5).then(result => {
-  console.log(result);
+//   if(await solver.check() !== 'sat'){ return solver.check(); }
+
+//   const model = solver.model();
+
+//   const results = {};
+
+//   results.custody = custody.map(day => model.eval(day).toString());
+//   results.work = work.map(day => model.eval(day).toString());
+
+//   return results;
+// }
+
+useSolver(500).then(result => {
+  console.log(result.length, result);
 });
