@@ -131,8 +131,8 @@ const useSolver = async (numberOfResults = 1) => {
 }
 
 
-useSolver(500).then(result => {
-  console.log(result.length);
-});
+// useSolver(500).then(result => {
+//   console.log(result.length);
+// });
 
 export default useSolver;
