@@ -40,10 +40,15 @@ const useSolver = async (numberOfResults = 1) => {
   solver.add(weekendCustody.eq(6));
 
   // each 7 days chaim and shanon should have at least 1 day of custody
-  for(let day = 0; day < 42; day += 7) {
-    const custodyWeek = custody.slice(day, day + 7).reduce((acc, day) => acc.add(day), context.Int.val(0));
-    solver.add(custodyWeek.ge(1));
-    solver.add(custodyWeek.le(6));
+  for(let day = 0; day < 42; day++) {
+    const custodyWeek = [];
+    for(let i = 0; i < 7; i++) {
+      const dayIndex = (day + i) % 42; // Wrap around
+      custodyWeek.push(custody[dayIndex]);
+    }
+    const weekSum = custodyWeek.reduce((acc, day) => acc.add(day), context.Int.val(0));
+    solver.add(weekSum.ge(1));
+    solver.add(weekSum.le(6));
   }
   
   // no single day of custody
@@ -125,18 +130,9 @@ const useSolver = async (numberOfResults = 1) => {
   return results;
 }
 
-//   if(await solver.check() !== 'sat'){ return solver.check(); }
-
-//   const model = solver.model();
-
-//   const results = {};
-
-//   results.custody = custody.map(day => model.eval(day).toString());
-//   results.work = work.map(day => model.eval(day).toString());
-
-//   return results;
-// }
 
 useSolver(500).then(result => {
-  console.log(result.length, result);
+  console.log(result.length);
 });
+
+export default useSolver;
