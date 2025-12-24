@@ -31,9 +31,13 @@ const useSolver = async (numberOfResults = 1) => {
     solver.add(day.le(1));
   });
 
-  // sum of custody should be 21
+  // chaim and shanon should have equal days (21 days each)
   const custodySum = custody.reduce((acc, day) => acc.add(day), context.Int.val(0));
   solver.add(custodySum.eq(21));
+
+  // chaim and shanon should have equal weekend days (6 days each)
+  const weekendCustody = (NON_WORKING_WEEKEND_DAYS.concat(WORKING_WEEKEND_DAYS)).reduce((acc, day) => acc.add(custody[day]), context.Int.val(0));
+  solver.add(weekendCustody.eq(6));
 
   // each 7 days chaim and shanon should have at least 1 day of custody
   for(let day = 0; day < 42; day += 7) {
@@ -41,8 +45,6 @@ const useSolver = async (numberOfResults = 1) => {
     solver.add(custodyWeek.ge(1));
     solver.add(custodyWeek.le(6));
   }
-
-  // chaim and shanon should have equal weekend days
   
   // no single day of custody
   for(let day = 0; day < 42; day++) {
