@@ -5,14 +5,14 @@ const WORKING_WEEKEND_DAYS = [6, 7, 27, 28];
 
 const useSolver = async (numberOfResults = 1) => {
   const z3 = await init();
-  const {Context} = z3;
+  const { Context } = z3;
   const context = new Context('main');
   const solver = new context.Solver();
 
   const custody = [];
   const work = [];
 
-  for(let index = 0; index < 42; index++) {
+  for (let index = 0; index < 42; index++) {
     custody.push(context.Int.const(`custody_${index}`));
     work.push(context.Int.const(`work_${index}`));
   }
@@ -40,9 +40,9 @@ const useSolver = async (numberOfResults = 1) => {
   solver.add(weekendCustody.eq(6));
 
   // each 7 days chaim and shanon should have at least 1 day of custody
-  for(let day = 0; day < 42; day++) {
+  for (let day = 0; day < 42; day++) {
     const custodyWeek = [];
-    for(let i = 0; i < 7; i++) {
+    for (let i = 0; i < 7; i++) {
       const dayIndex = (day + i) % 42; // Wrap around
       custodyWeek.push(custody[dayIndex]);
     }
@@ -50,9 +50,9 @@ const useSolver = async (numberOfResults = 1) => {
     solver.add(weekSum.ge(1));
     solver.add(weekSum.le(6));
   }
-  
+
   // no single day of custody
-  for(let day = 0; day < 42; day++) {
+  for (let day = 0; day < 42; day++) {
     solver.add(
       context.Or(
         custody[day].eq(custody[(day + 1) % 42]),
@@ -62,13 +62,13 @@ const useSolver = async (numberOfResults = 1) => {
   }
 
   // each week shanon should work 2 day
-  for(let day = 0; day < 42; day += 7) {
+  for (let day = 0; day < 42; day += 7) {
     const workWeek = work.slice(day, day + 7).reduce((acc, day) => acc.add(day), context.Int.val(0));
     solver.add(workWeek.ge(2));
   }
 
   // shanon can't work on the 1 and 4 day of the week
-  for(let day = 1; day < 42; day += 7) {
+  for (let day = 1; day < 42; day += 7) {
     solver.add(work[day].eq(0));
     solver.add(work[day + 3].eq(0));
   }
@@ -82,57 +82,105 @@ const useSolver = async (numberOfResults = 1) => {
   });
 
   // shanon cant have custody if she is working
-  for(let day = 0; day < 42; day++) {
+  for (let day = 0; day < 42; day++) {
     solver.add(custody[day].eq(1).implies(work[day].eq(0)));
     solver.add(custody[day].eq(1).implies(work[(day + 1) % 42].eq(0)));
   }
-  
+
   const results = [];
-  
+
   // Find multiple solutions
   for (let i = 0; i < numberOfResults; i++) {
     const checkResult = await solver.check();
-    
+
     if (checkResult !== 'sat') {
       break; // No more solutions
     }
-    
+
     const model = solver.model();
-    
+
     // Extract current solution
     const currentSolution = {
       custody: custody.map(day => model.eval(day).toString()),
       work: work.map(day => model.eval(day).toString())
     };
-    
+
     results.push(currentSolution);
-    
+
     // Exclude this solution: at least one variable must be different
     // Create: OR(custody[0] != value0, custody[1] != value1, ..., work[0] != value0, ...)
     const exclusionConstraints = [];
-    
+
     // Add constraints for all custody variables
     custody.forEach((day, index) => {
       const value = model.eval(day);
       exclusionConstraints.push(day.neq(value));
     });
-    
+
     // Add constraints for all work variables
     work.forEach((day, index) => {
       const value = model.eval(day);
       exclusionConstraints.push(day.neq(value));
     });
-    
+
     // At least one must be different
     solver.add(context.Or(...exclusionConstraints));
   }
-  
+
   return results;
 }
 
 
-// useSolver(500).then(result => {
-//   console.log(result.length);
-// });
+useSolver(500).then(result => {
+  result.forEach((result, i) => {
+    console.log(`result ${i}`);
+    console.log("s m t w t f s");
+    for (let week = 0; week < 42; week += 7) {
+      let line = "";
+      for (let day = 0; day < 7; day++) {
+        let cust = result.custody[week + day] == '1';
+        let work = result.work[week + day] == '1';
+        if (cust) {
+          line += "S ";
+          console.assert(!work);
+        } else if (work) {
+          line += "w "
+        } else {
+          line += "c "
+        }
+      }
+      console.log(line);
+    }
+    console.log("");
+  });
+
+  console.log("S rate:");
+  console.log("s \tm \tt \tw \tt \tf \ts");
+  for (let week = 0; week < 42; week += 7) {
+    let line = "";
+    for (let day = 0; day < 7; day++) {
+      let s = result.reduce((accumulator, r) => accumulator + Number(r.custody[week + day] == '1'), 0);
+      line += s;
+      line += '\t';
+    }
+    console.log(line);
+  }
+  console.log("");
+
+  console.log("Work rate:");
+  console.log("s \tm \tt \tw \tt \tf \ts");
+  for (let week = 0; week < 42; week += 7) {
+    let line = "";
+    for (let day = 0; day < 7; day++) {
+      let s = result.reduce((accumulator, r) => accumulator + Number(r.work[week + day] == '1'), 0);
+      line += s;
+      line += '\t';
+    }
+    console.log(line);
+  }
+  console.log("");
+
+  console.log(result.length);
+});
 
 export default useSolver;
