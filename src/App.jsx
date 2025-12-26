@@ -23,6 +23,7 @@ const App = () => {
       });
 
       if (response.data.success) {
+        response.data.results.sort((a, b) => a.transitions - b.transitions);
         setResults(response.data.results);
       } else {
         setError(response.data.error);
