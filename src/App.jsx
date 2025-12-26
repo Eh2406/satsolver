@@ -12,7 +12,7 @@ const App = () => {
   const handleSolve = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await axios.post(`${API_URL}/solve`, {
         numberOfResults,
@@ -21,7 +21,7 @@ const App = () => {
         shanonDays: [],
         chaimDays: []
       });
-      
+
       if (response.data.success) {
         setResults(response.data.results);
       } else {
@@ -34,10 +34,28 @@ const App = () => {
     }
   };
 
+  const fromatRes = (result) => {
+    let out = [];
+
+    for (let day = 0; day < 42; day++) {
+      let cust = result.custody[day] == '1';
+      let work = result.work[day] == '1';
+      if (cust) {
+        out.push("S");
+        console.assert(!work);
+      } else if (work) {
+        out.push("w");
+      } else {
+        out.push("c");
+      }
+    }
+    return out;
+  }
+
   return (
     <div className="app">
       <h1>Custody Solver</h1>
-      
+
       <div>
         <label>
           Number of Results:
@@ -64,18 +82,57 @@ const App = () => {
               <h3>Solution {index + 1}</h3>
               <p>Transitions: {result.transitions}</p>
               <div>
-                <strong>Custody:</strong>
-                <pre>{JSON.stringify(result.custody, null, 2)}</pre>
-              </div>
-              <div>
-                <strong>Work:</strong>
-                <pre>{JSON.stringify(result.work, null, 2)}</pre>
+                <strong>Calendar:</strong>
+                <br></br>
+                <pre style={{ display: 'inline-grid', gridTemplateColumns: 'repeat(7, 1fr)', columnGap: '3px', rowGap: '2px', backgroundColor: '#333', border: '2px solid #333', margin: '10px' }}>
+                  {"s m t w t f s".split(" ").map(day => (
+                    <div style={{ backgroundColor: '#fff', padding: `5px` }}>
+                      {day}
+                    </div>
+                  )
+                  )}
+                  {fromatRes(result).map(day => (
+                    <div style={{ backgroundColor: day === 'S' ? '#833' : day === 'w' ? '#383' : '#388', padding: `5px` }}>
+                      {day}
+                    </div>
+                  )
+                  )}
+                </pre>
+                <pre style={{ display: 'inline-grid', gridTemplateColumns: 'repeat(7, 1fr)', columnGap: '3px', rowGap: '2px', backgroundColor: '#333', border: '2px solid #333', margin: '10px' }}>
+                  {"s m t w t f s".split(" ").map(day => (
+                    <div style={{ backgroundColor: '#fff', padding: `5px` }}>
+                      {day}
+                    </div>
+                  )
+                  )}
+                  {fromatRes(result).map(day => (
+                    <div style={{ backgroundColor: day !== 'S' ? '#777' : '#fff', padding: `5px` }}>
+                      {day}
+                    </div>
+                  )
+                  )}
+                </pre>
+                <pre style={{ display: 'inline-grid', gridTemplateColumns: 'repeat(7, 1fr)', columnGap: '3px', rowGap: '2px', backgroundColor: '#333', border: '2px solid #333', margin: '10px' }}>
+                  {"s m t w t f s".split(" ").map(day => (
+                    <div style={{ backgroundColor: '#fff', padding: `5px` }}>
+                      {day}
+                    </div>
+                  )
+                  )}
+                  {fromatRes(result).map(day => (
+                    <div style={{ backgroundColor: day === 'w' ? '#383' : '#fff', padding: `5px` }}>
+                      {day}
+                    </div>
+                  )
+                  )}
+                </pre>
               </div>
             </div>
           ))}
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 }
 
