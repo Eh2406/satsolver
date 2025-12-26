@@ -1,10 +1,10 @@
 import { init } from 'z3-solver';
 
-const defaultArgs = { 
-  workingDays: [], 
-  nonWorkingDays: [], 
-  shanonDays: [], 
-  chaimDays:[] 
+const defaultArgs = {
+  workingDays: [],
+  nonWorkingDays: [],
+  shanonDays: [],
+  chaimDays: []
 };
 const useSolver = async (numberOfResults = 1, args = defaultArgs) => {
   const z3 = await init();
@@ -40,7 +40,8 @@ const useSolver = async (numberOfResults = 1, args = defaultArgs) => {
 
   // first half should have more custody for Shanon
   // const firstHalfCustody = custody.slice(0, 21).reduce((acc, day) => acc.add(day), context.Int.val(0));
-  // solver.add(firstHalfCustody.ge(11));
+  // const secondHalfCustody = custody.slice(21, 42).reduce((acc, day) => acc.add(day), context.Int.val(0));
+  // solver.add(firstHalfCustody.ge(secondHalfCustody));
 
   // chaim and shanon should have equal weekend days (6 days each)
   const weekendCustody = (NON_WORKING_WEEKEND_DAYS.concat(WORKING_WEEKEND_DAYS)).reduce((acc, day) => acc.add(custody[day]), context.Int.val(0));
