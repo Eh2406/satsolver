@@ -1,9 +1,12 @@
 import { init } from 'z3-solver';
 
-const NON_WORKING_WEEKEND_DAYS = [0, 13, 14, 20, 21, 34, 35, 41];
-const WORKING_WEEKEND_DAYS = [6, 7, 27, 28];
-
-const useSolver = async (numberOfResults = 1) => {
+const defaultArgs = { 
+  workingDays: [], 
+  nonWorkingDays: [], 
+  shanonDays: [], 
+  chaimDays:[] 
+};
+const useSolver = async (numberOfResults = 1, args = defaultArgs) => {
   const z3 = await init();
   const { Context } = z3;
   const context = new Context('main');
@@ -34,6 +37,10 @@ const useSolver = async (numberOfResults = 1) => {
   // chaim and shanon should have equal days (21 days each)
   const custodySum = custody.reduce((acc, day) => acc.add(day), context.Int.val(0));
   solver.add(custodySum.eq(21));
+
+  // first half should have more custody for Shanon
+  // const firstHalfCustody = custody.slice(0, 21).reduce((acc, day) => acc.add(day), context.Int.val(0));
+  // solver.add(firstHalfCustody.ge(11));
 
   // chaim and shanon should have equal weekend days (6 days each)
   const weekendCustody = (NON_WORKING_WEEKEND_DAYS.concat(WORKING_WEEKEND_DAYS)).reduce((acc, day) => acc.add(custody[day]), context.Int.val(0));
@@ -67,7 +74,7 @@ const useSolver = async (numberOfResults = 1) => {
     solver.add(workWeek.ge(2));
   }
 
-  // shanon can't work on the 1 and 4 day of the week
+  // shanon can't work on Monday (1) and Thursday (4) day of the week
   for (let day = 1; day < 42; day += 7) {
     solver.add(work[day].eq(0));
     solver.add(work[day + 3].eq(0));
@@ -99,10 +106,20 @@ const useSolver = async (numberOfResults = 1) => {
 
     const model = solver.model();
 
+    // Count transitions (when custody changes from one day to the next)
+    let transitions = 0;
+    for (let day = 0; day < 42; day++) {
+      if (model.eval(custody[day]).toString() !== model.eval(custody[(day + 1) % 42]).toString()) {
+        transitions++;
+      }
+    }
+
     // Extract current solution
     const currentSolution = {
       custody: custody.map(day => model.eval(day).toString()),
-      work: work.map(day => model.eval(day).toString())
+      work: work.map(day => model.eval(day).toString()),
+      transitions: transitions,
+
     };
 
     results.push(currentSolution);
@@ -130,57 +147,16 @@ const useSolver = async (numberOfResults = 1) => {
   return results;
 }
 
-
-useSolver(500).then(result => {
-  result.forEach((result, i) => {
-    console.log(`result ${i}`);
-    console.log("s m t w t f s");
-    for (let week = 0; week < 42; week += 7) {
-      let line = "";
-      for (let day = 0; day < 7; day++) {
-        let cust = result.custody[week + day] == '1';
-        let work = result.work[week + day] == '1';
-        if (cust) {
-          line += "S ";
-          console.assert(!work);
-        } else if (work) {
-          line += "w "
-        } else {
-          line += "c "
-        }
-      }
-      console.log(line);
-    }
-    console.log("");
-  });
-
-  console.log("S rate:");
-  console.log("s \tm \tt \tw \tt \tf \ts");
-  for (let week = 0; week < 42; week += 7) {
-    let line = "";
-    for (let day = 0; day < 7; day++) {
-      let s = result.reduce((accumulator, r) => accumulator + Number(r.custody[week + day] == '1'), 0);
-      line += s;
-      line += '\t';
-    }
-    console.log(line);
-  }
-  console.log("");
-
-  console.log("Work rate:");
-  console.log("s \tm \tt \tw \tt \tf \ts");
-  for (let week = 0; week < 42; week += 7) {
-    let line = "";
-    for (let day = 0; day < 7; day++) {
-      let s = result.reduce((accumulator, r) => accumulator + Number(r.work[week + day] == '1'), 0);
-      line += s;
-      line += '\t';
-    }
-    console.log(line);
-  }
-  console.log("");
-
-  console.log(result.length);
-});
+export const NON_WORKING_WEEKEND_DAYS = [0, 13, 14, 20, 21, 34, 35, 41];
+export const WORKING_WEEKEND_DAYS = [6, 7, 27, 28];
 
 export default useSolver;
+
+// useSolver({
+//   numberOfResults: 500,
+//   workingDays: WORKING_WEEKEND_DAYS,
+//   nonWorkingDays: NON_WORKING_WEEKEND_DAYS,
+// }).then(result => {
+//   console.log(result.length);
+//   // console.log(JSON.stringify(result, null, 2));
+// });
