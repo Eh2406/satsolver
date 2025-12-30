@@ -2,25 +2,15 @@
 
 ## Development
 
-To run the development environment, you need to start both the backend server and the frontend dev server in separate terminals:
+To run the development environment, you need to start the frontend dev server:
 
-**Terminal 1 - Backend Server:**
-
-```bash
-yarn server
-```
-
-This starts the Express API server on `http://localhost:3001`
-
-**Terminal 2 - Frontend Dev Server:**
+**Terminal - Frontend Dev Server:**
 
 ```bash
 yarn dev
 ```
 
 This starts the Vite development server (typically on `http://localhost:5173`)
-
-The frontend dev server is configured to proxy API requests to the backend server.
 
 ## Build
 
@@ -35,6 +25,9 @@ This creates an optimized production build in the `dist/` directory.
 # Sources
 
 https://www.youtube.com/watch?v=KZfB80LDXSo
+
+Z3 on the front end
+https://fletcheaston.com/software/packages/z3-solver
 
 Z3 Playground
 https://microsoft.github.io/z3guide/playground/test/
