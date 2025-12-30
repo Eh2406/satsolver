@@ -6,6 +6,9 @@ const WORKING_WEEKEND_DAYS = [6, 7, 27, 28];
 
 const defaultArgs = {
     numberOfResults: 1,
+    cutSymmetry: false,
+    shanonWorkOfSedReq: [],
+    shanonWorkOfWeekReq: [-2, -5],
 }
 
 console.log("basic inits");
@@ -59,9 +62,11 @@ const useSat = () => {
         solver.add(custodySum.eq(21));
 
         // first half should have more custody for Shanon
-        // const firstHalfCustody = custody.slice(0, 21).reduce((acc, day) => acc.add(day), context.Int.val(0));
-        // const secondHalfCustody = custody.slice(21, 42).reduce((acc, day) => acc.add(day), context.Int.val(0));
-        // solver.add(firstHalfCustody.ge(secondHalfCustody));
+        if (args.cutSymmetry) {
+            const firstHalfCustody = custody.slice(0, 21).reduce((acc, day) => acc.add(day), context.Int.val(0));
+            const secondHalfCustody = custody.slice(21, 42).reduce((acc, day) => acc.add(day), context.Int.val(0));
+            solver.add(firstHalfCustody.ge(secondHalfCustody));
+        }
 
         // chaim and shanon should have equal weekend days (6 days each)
         const weekendCustody = (NON_WORKING_WEEKEND_DAYS.concat(WORKING_WEEKEND_DAYS)).reduce((acc, day) => acc.add(custody[day]), context.Int.val(0));
@@ -96,9 +101,13 @@ const useSat = () => {
         }
 
         // shanon can't work on Monday (1) and Thursday (4) day of the week
-        for (let day = 1; day < 42; day += 7) {
-            solver.add(work[day].eq(0));
-            solver.add(work[day + 3].eq(0));
+        for (let day of args.shanonWorkOfSedReq) {
+            solver.add(work[Math.abs(day) - 1].eq(Number(day > 0)));
+        }
+        for (let day of args.shanonWorkOfWeekReq) {
+            for (let week = 0; week < 42; week += 7) {
+                solver.add(work[week + Math.abs(day) - 1].eq(Number(day > 0)));
+            }
         }
 
         // shanon works on the 6, 7, 27,28
@@ -183,19 +192,7 @@ const useSat = () => {
 
             // Exclude this solution: at least one variable must be different
             // Create: OR(custody[0] != value0, custody[1] != value1, ..., work[0] != value0, ...)
-            const exclusionConstraints = [];
-
-            // Add constraints for all custody variables
-            custody.forEach((day, index) => {
-                const value = model.eval(day);
-                exclusionConstraints.push(day.neq(value));
-            });
-
-            // Add constraints for all work variables
-            work.forEach((day, index) => {
-                const value = model.eval(day);
-                exclusionConstraints.push(day.neq(value));
-            });
+            const exclusionConstraints = custody.concat(work).map(day => day.neq(model.eval(day)));
 
             // At least one must be different
             solver.add(context.Or(...exclusionConstraints));
